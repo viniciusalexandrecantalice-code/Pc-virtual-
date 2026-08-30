@@ -1,0 +1,48 @@
+name: Virtual PC Online
+
+on:
+  workflow_dispatch:
+    inputs:
+      access_password:
+        description: 'Defina uma senha para o usuário (ou deixe padrão)'
+        required: true
+        default: '123456'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 360 # Mantém a máquina ligada por até 6 horas
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Configurar Senha do Usuário
+        run: |
+          echo "runner:${{ github.event.inputs.access_password }}" | sudo chpasswd
+          sudo usermod -aG sudo runner
+
+      - name: Instalar Servidor de Área de Trabalho e Ferramentas
+        run: |
+          sudo apt update
+          sudo apt install -y xfce4 xfce4-goodies tightvncserver wget curl
+
+      - name: Instalar o Ngrok
+        uses: ngrok/ngrok-action@v1
+        with:
+          auth-token: ${{ secrets.NGROK_AUTHTOKEN }}
+
+      - name: Iniciar Servidor VNC
+        run: |
+          vncserver :1 -geometry 1280x720 -depth 24 &
+          echo "VNC iniciado na porta 5901"
+
+      - name: Expor VNC via Ngrok (TCP)
+        run: |
+          ngrok tcp 5901 &
+
+      - name: Manter Máquina Ativa
+        run: |
+          echo "PC Virtual pronto! Use um cliente VNC (como o VNC Viewer) para se conectar."
+          sleep infinity
+          
