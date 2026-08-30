@@ -27,19 +27,17 @@ jobs:
           sudo apt update
           sudo apt install -y xfce4 xfce4-goodies tightvncserver wget curl
 
-      - name: Instalar o Ngrok
-        uses: ngrok/ngrok-action@v1
-        with:
-          auth-token: ${{ secrets.NGROK_AUTHTOKEN }}
-
       - name: Iniciar Servidor VNC
         run: |
           vncserver :1 -geometry 1280x720 -depth 24 &
           echo "VNC iniciado na porta 5901"
 
-      - name: Expor VNC via Ngrok (TCP)
-        run: |
-          ngrok tcp 5901 &
+      - name: Instalar e Expor VNC via Ngrok
+        uses: ngrok/ngrok-tunnel-action@v1
+        with:
+          auth-token: ${{ secrets.NGROK_AUTHTOKEN }}
+          tunnel-type: tcp
+          port: 5901
 
       - name: Manter Máquina Ativa
         run: |
